@@ -353,6 +353,7 @@
         let gameSpeed = 1;
         let cameraY = 0;
         let targetCameraY = 0;
+        let isMobile = false;
         
         // Plane animation
         let plane = null;
@@ -361,12 +362,18 @@
         let gameOverSequence = 0; // 0: playing, 1: zooming out, 2: plane incoming, 3: collapsing
         let gameOverTimer = 0;
 
+        // Detect mobile
+        function detectMobile() {
+            isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        }
+
         // Resize canvas
         function resizeCanvas() {
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
+            detectMobile();
         }
 
         window.addEventListener('resize', resizeCanvas);
@@ -613,7 +620,8 @@
             currentBlock = null;
             cameraY = 0;
             targetCameraY = 0;
-            speed = 2;
+            // Faster on desktop than mobile
+            speed = isMobile ? 3.5 : 5;
             gameSpeed = 1;
             direction = 1;
             plane = null;
@@ -676,9 +684,9 @@
             score++;
             updateScore();
             
-            // Increase difficulty
+            // Increase difficulty - faster increase on desktop
             if (score % 5 === 0) {
-                speed += 0.5;
+                speed += isMobile ? 0.6 : 0.8;
             }
             
             // Move camera up slowly - keep growing tower visible
