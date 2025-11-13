@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tower Pump 9/11 - Build Higher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #FFE6D5 100%);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #score {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #highscore {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-size: 14px;
+            color: #7f8c8d;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            pointer-events: all;
+            max-width: 90vw;
+        }
+
+        #gameOver.show {
+            display: block;
+            animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        #gameOver h2 {
+            font-size: 32px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        #finalScore {
+            font-size: 48px;
+            color: #2c3e50;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            pointer-events: all;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button.share {
+            background: linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%);
+        }
+
+        #footer {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 13px;
+            color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.75);
+            padding: 15px 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            max-width: 92vw;
+            backdrop-filter: blur(8px);
+        }
+
+        #footer a {
+            color: #1DA1F2;
+            text-decoration: none;
+            margin: 0 5px;
+            pointer-events: all;
+            transition: all 0.2s;
+            font-weight: 600;
+            display: inline-block;
+            font-size: 13px;
+        }
+
+        #footer a:hover {
+            color: #0d8bd9;
+            transform: translateY(-2px);
+        }
+
+        .ca {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            opacity: 0.85;
+            margin: 8px 0 6px 0;
+            font-weight: 600;
+            color: #34495e;
+            background: rgba(240, 240, 245, 0.6);
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: inline-block;
+            word-break: break-all;
+        }
+
+        .tribute {
+            font-size: 12px;
+            opacity: 0.5;
+            margin-bottom: 6px;
+            color: #34495e;
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            pointer-events: all;
+            max-width: 90vw;
+            backdrop-filter: blur(10px);
+        }
+
+        #startScreen h1 {
+            font-size: 42px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            line-height: 1.2;
+            font-weight: 900;
+        }
+
+        #startScreen p {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            #ui {
+                padding: 10px;
+            }
+
+            #score {
+                padding: 10px 20px;
+                font-size: 20px;
+            }
+
+            #highscore {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+
+            #gameOver {
+                padding: 30px 20px;
+            }
+
+            #gameOver h2 {
+                font-size: 24px;
+            }
+
+            #finalScore {
+                font-size: 36px;
+            }
+
+            .button {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
+
+            #footer {
+                bottom: 8px;
+                padding: 12px 20px;
+                font-size: 12px;
+                max-width: 95vw;
+                background: rgba(255, 255, 255, 0.75);
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .ca {
+                font-size: 11px;
+                padding: 5px 10px;
+                margin: 6px 0 5px 0;
+                font-weight: 600;
+            }
+
+            .tribute {
+                font-size: 11px;
+                margin-bottom: 5px;
+                font-weight: 500;
+                opacity: 0.5;
+            }
+
+            #footer a {
+                font-size: 12px;
+                display: block;
+                margin: 6px 0;
+                font-weight: 600;
+            }
+
+            #startScreen {
+                padding: 35px 25px;
+                max-width: 90vw;
+            }
+
+            #startScreen h1 {
+                font-size: 34px;
+                margin-bottom: 18px;
+                font-weight: 900;
+            }
+
+            #startScreen p {
+                font-size: 15px;
+                margin-bottom: 25px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <div id="score">Floor: 0</div>
+            <div id="highscore">Best: 0</div>
+        </div>
+
+        <div id="startScreen">
+            <h1>🏙️ Tower Pump 9/11</h1>
+            <p>Tap at the perfect moment to stack floors!<br>Build the tallest tower in the city!</p>
+            <button class="button" onclick="startGame()">Start Building</button>
+        </div>
+
+        <div id="gameOver">
+            <h2>💥 Tower Down!</h2>
+            <div id="finalScore">0</div>
+            <p>Floors Built</p>
+            <button class="button" onclick="restartGame()">Build Again</button>
+            <button class="button share" onclick="shareScore()">Share Score</button>
+        </div>
+
+        <div id="footer">
+            <div class="tribute">9/11 - Never Forget 🗽</div>
+            <div class="ca">9xQeWvG8EghF2kQJNZm9RpYnD4hS3kX5vFp7mNbdpump</div>
+            <a href="https://twitter.com/towerpump911" target="_blank">🐦 @towerpump911</a>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let gameState = 'start'; // start, playing, gameOver
+        let score = 0;
+        let highScore = 0;
+        let blocks = [];
+        let currentBlock = null;
+        let speed = 2;
+        let direction = 1;
+        let blockHeight = 40;
+        let baseWidth = 200;
+        let gameSpeed = 1;
+        let cameraY = 0;
+        let targetCameraY = 0;
+        
+        // Plane animation
+        let plane = null;
+        let explosions = [];
+        let collapseBlocks = [];
+        let gameOverSequence = 0; // 0: playing, 1: zooming out, 2: plane incoming, 3: collapsing
+        let gameOverTimer = 0;
+
+        // Resize canvas
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Cookie functions
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days = 365) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
+        }
+
+        // Load high score
+        const savedScore = getCookie('towerHighScore');
+        if (savedScore) {
+            highScore = parseInt(savedScore);
+            document.getElementById('highscore').textContent = `Best: ${highScore}`;
+        }
+
+        // Block class
+        class Block {
+            constructor(x, y, width) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = blockHeight;
+                this.color = this.getColor();
+            }
+
+            getColor() {
+                const colors = [
+                    '#3498db', '#e74c3c', '#f39c12', '#2ecc71', 
+                    '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            draw(offsetY = 0) {
+                const drawY = this.y - offsetY;
+                
+                // Main block
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, drawY, this.width, this.height);
+                
+                // Windows
+                ctx.fillStyle = 'rgba(255, 255, 200, 0.8)';
+                const windowSize = 6;
+                const windowSpacing = 15;
+                const rows = 2;
+                
+                for (let row = 0; row < rows; row++) {
+                    for (let i = windowSpacing; i < this.width - windowSpacing; i += windowSpacing) {
+                        ctx.fillRect(
+                            this.x + i, 
+                            drawY + 10 + row * 15, 
+                            windowSize, 
+                            windowSize
+                        );
+                    }
+                }
+                
+                // Border
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x, drawY, this.width, this.height);
+            }
+        }
+
+        // Plane class
+        class Plane {
+            constructor(targetY) {
+                this.x = -150;
+                this.y = targetY;
+                this.speed = 8;
+                this.scale = 2.5;
+                this.angle = 0;
+            }
+
+            update() {
+                this.x += this.speed;
+                return this.x > width / 2;
+            }
+
+            draw(offsetY = 0) {
+                const drawY = this.y - offsetY;
+                ctx.save();
+                ctx.translate(this.x, drawY);
+                ctx.rotate(this.angle);
+                ctx.scale(this.scale, this.scale);
+                
+                // Realistic commercial airplane (Boeing 767 style)
+                
+                // Fuselage body
+                ctx.fillStyle = '#E8E8E8';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 35, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Cockpit/nose
+                ctx.fillStyle = '#D0D0D0';
+                ctx.beginPath();
+                ctx.ellipse(32, 0, 8, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Cockpit windows
+                ctx.fillStyle = '#2c3e50';
+                ctx.beginPath();
+                ctx.arc(35, -1, 2, 0, Math.PI * 2);
+                ctx.arc(32, -1, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Main wings
+                ctx.fillStyle = '#C0C0C0';
+                ctx.beginPath();
+                ctx.moveTo(-5, 0);
+                ctx.lineTo(-15, -18);
+                ctx.lineTo(-5, -18);
+                ctx.lineTo(10, -5);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(-5, 0);
+                ctx.lineTo(-15, 18);
+                ctx.lineTo(-5, 18);
+                ctx.lineTo(10, 5);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Wing details (engines)
+                ctx.fillStyle = '#A8A8A8';
+                ctx.beginPath();
+                ctx.ellipse(-8, -12, 5, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(-8, 12, 5, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Engine fronts
+                ctx.fillStyle = '#505050';
+                ctx.beginPath();
+                ctx.arc(-6, -12, 2.5, 0, Math.PI * 2);
+                ctx.arc(-6, 12, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Tail fin (vertical stabilizer)
+                ctx.fillStyle = '#C0C0C0';
+                ctx.beginPath();
+                ctx.moveTo(-28, 0);
+                ctx.lineTo(-38, -12);
+                ctx.lineTo(-32, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Horizontal stabilizers
+                ctx.beginPath();
+                ctx.moveTo(-30, -1);
+                ctx.lineTo(-38, -8);
+                ctx.lineTo(-32, -1);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(-30, 1);
+                ctx.lineTo(-38, 8);
+                ctx.lineTo(-32, 1);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Body details (windows along fuselage)
+                ctx.fillStyle = '#6090C0';
+                for (let i = -20; i < 25; i += 4) {
+                    ctx.fillRect(i, -2, 2, 1.5);
+                    ctx.fillRect(i, 0.5, 2, 1.5);
+                }
+                
+                // Red stripe along fuselage
+                ctx.strokeStyle = '#C0392B';
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(-28, -4);
+                ctx.lineTo(30, -4);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(-28, 4);
+                ctx.lineTo(30, 4);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
+        // Explosion class
+        class Explosion {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.particles = [];
+                for (let i = 0; i < 20; i++) {
+                    this.particles.push({
+                        x: 0,
+                        y: 0,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        life: 1,
+                        size: Math.random() * 8 + 4
+                    });
+                }
+            }
+
+            update() {
+                this.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3;
+                    p.life -= 0.02;
+                });
+                this.particles = this.particles.filter(p => p.life > 0);
+                return this.particles.length === 0;
+            }
+
+            draw(offsetY = 0) {
+                this.particles.forEach(p => {
+                    ctx.fillStyle = `rgba(255, ${100 + Math.random() * 155}, 0, ${p.life})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x + p.x, this.y + p.y - offsetY, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            gameState = 'playing';
+            score = 0;
+            blocks = [];
+            currentBlock = null;
+            cameraY = 0;
+            targetCameraY = 0;
+            speed = 2;
+            gameSpeed = 1;
+            direction = 1;
+            plane = null;
+            explosions = [];
+            collapseBlocks = [];
+            gameOverSequence = 0;
+            gameOverTimer = 0;
+            
+            // Base block - 80px above footer
+            const footerHeight = 80; // Approximate footer + margin
+            const baseBlock = new Block(
+                width / 2 - baseWidth / 2,
+                height - footerHeight - 80,
+                baseWidth
+            );
+            blocks.push(baseBlock);
+            
+            spawnBlock();
+            updateScore();
+        }
+
+        function spawnBlock() {
+            if (!currentBlock) {
+                const lastBlock = blocks[blocks.length - 1];
+                currentBlock = new Block(
+                    0,
+                    lastBlock.y - blockHeight - 10,
+                    lastBlock.width
+                );
+                direction = Math.random() > 0.5 ? 1 : -1;
+            }
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = `Floor: ${score}`;
+        }
+
+        function placeBlock() {
+            if (!currentBlock || gameState !== 'playing') return;
+
+            const lastBlock = blocks[blocks.length - 1];
+            const overlap = getOverlap(currentBlock, lastBlock);
+
+            if (overlap <= 0) {
+                // Miss - trigger plane crash
+                triggerCrash();
+                return;
+            }
+
+            // Perfect placement
+            const newWidth = overlap;
+            const newX = Math.max(currentBlock.x, lastBlock.x);
+            
+            currentBlock.width = newWidth;
+            currentBlock.x = newX;
+            
+            blocks.push(currentBlock);
+            currentBlock = null;
+            
+            score++;
+            updateScore();
+            
+            // Increase difficulty
+            if (score % 5 === 0) {
+                speed += 0.5;
+            }
+            
+            // Move camera up slowly - keep growing tower visible
+            const footerSpace = 120; // Footer height + margin
+            const viewableHeight = height - footerSpace;
+            targetCameraY = blocks[blocks.length - 1].y - viewableHeight * 0.7;
+            
+            spawnBlock();
+        }
+
+        function getOverlap(block1, block2) {
+            const left = Math.max(block1.x, block2.x);
+            const right = Math.min(block1.x + block1.width, block2.x + block2.width);
+            return right - left;
+        }
+
+        function triggerCrash() {
+            gameState = 'gameOver';
+            gameOverSequence = 1; // Start zoom out
+            gameOverTimer = 0;
+            currentBlock = null;
+        }
+
+        function endGame() {
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').classList.add('show');
+            
+            if (score > highScore) {
+                highScore = score;
+                setCookie('towerHighScore', highScore);
+                document.getElementById('highscore').textContent = `Best: ${highScore}`;
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').classList.remove('show');
+            startGame();
+        }
+
+        function shareScore() {
+            const ca = '9xQeWvG8EghF2kQJNZm9RpYnD4hS3kX5vFp7mNbdpump';
+            const twitterHandle = '@towerpump911';
+            const text = `🏙️ I just built a ${score}-floor world trade center! Can you beat my score?\n\n${twitterHandle}\nCA: ${ca}`;
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        // Game loop
+        function update() {
+            // Handle game over sequence
+            if (gameState === 'gameOver') {
+                gameOverTimer++;
+                
+                if (gameOverSequence === 1) {
+                    // Sequence 1: Zoom out to show whole tower
+                    const topBlock = blocks[blocks.length - 1];
+                    const bottomBlock = blocks[0];
+                    const towerHeight = bottomBlock.y - topBlock.y;
+                    
+                    // Keep bottom block 30px above footer when zoomed out
+                    const footerSpace = 100; // Footer height
+                    const bottomMargin = 30;
+                    const availableHeight = height - footerSpace - bottomMargin;
+                    
+                    // Calculate camera to show full tower with bottom at correct position
+                    targetCameraY = topBlock.y - (availableHeight - towerHeight);
+                    
+                    // Smooth zoom
+                    cameraY += (targetCameraY - cameraY) * 0.05;
+                    
+                    // After 80 frames, spawn plane
+                    if (gameOverTimer > 80) {
+                        gameOverSequence = 2;
+                        const planeTargetY = topBlock.y + blockHeight / 2;
+                        plane = new Plane(planeTargetY);
+                    }
+                }
+                
+                if (gameOverSequence === 2) {
+                    // Sequence 2: Plane flies in
+                    if (plane) {
+                        const hitTarget = plane.update();
+                        if (hitTarget) {
+                            explosions.push(new Explosion(plane.x, plane.y));
+                            gameOverSequence = 3;
+                            
+                            // Prepare collapse
+                            collapseBlocks = blocks.map((block, index) => ({
+                                ...block,
+                                vx: (Math.random() - 0.5) * 5,
+                                vy: -Math.random() * 5,
+                                rotation: 0,
+                                rotationSpeed: (Math.random() - 0.5) * 0.2
+                            }));
+                        }
+                    }
+                }
+                
+                if (gameOverSequence === 3) {
+                    // Sequence 3: Tower collapses
+                    collapseBlocks.forEach(block => {
+                        block.x += block.vx;
+                        block.y += block.vy;
+                        block.vy += 0.5; // gravity
+                        block.rotation += block.rotationSpeed;
+                    });
+
+                    // Check if animation is done - blocks fell far below the bottom
+                    const bottomBlock = blocks[0]; // Original bottom
+                    if (collapseBlocks.length > 0 && collapseBlocks[0].y > bottomBlock.y + height) {
+                        endGame();
+                        gameOverSequence = 4; // Prevent multiple calls
+                    }
+                }
+            } else {
+                // Normal gameplay camera - slower movement
+                cameraY += (targetCameraY - cameraY) * 0.06;
+            }
+
+            // Normal gameplay
+            if (gameState === 'playing' && currentBlock) {
+                currentBlock.x += speed * direction * gameSpeed;
+                
+                // Bounce
+                if (currentBlock.x <= 0 || currentBlock.x + currentBlock.width >= width) {
+                    direction *= -1;
+                    currentBlock.x = Math.max(0, Math.min(currentBlock.x, width - currentBlock.width));
+                }
+            }
+
+            // Update explosions
+            explosions = explosions.filter(exp => !exp.update());
+        }
+
+        function draw() {
+            // Clear
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw background elements
+            drawClouds();
+            drawCity();
+
+            // Draw blocks
+            if (gameOverSequence === 3) {
+                // Draw collapsing blocks
+                collapseBlocks.forEach(block => {
+                    ctx.save();
+                    ctx.translate(block.x + block.width / 2, block.y - cameraY + block.height / 2);
+                    ctx.rotate(block.rotation);
+                    ctx.fillStyle = block.color;
+                    ctx.fillRect(-block.width / 2, -block.height / 2, block.width, block.height);
+                    ctx.restore();
+                });
+            } else {
+                // Draw normal blocks
+                blocks.forEach(block => block.draw(cameraY));
+                if (currentBlock && gameState === 'playing') {
+                    currentBlock.draw(cameraY);
+                }
+            }
+
+            // Draw plane
+            if (plane) {
+                plane.draw(cameraY);
+            }
+
+            // Draw explosions
+            explosions.forEach(exp => exp.draw(cameraY));
+        }
+
+        function drawClouds() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            const cloudY = (cameraY * 0.3) % 200;
+            
+            for (let i = 0; i < 5; i++) {
+                const y = i * 200 - cloudY;
+                drawCloud(100 + i * 150, y);
+                drawCloud(width - 150 - i * 100, y + 100);
+            }
+        }
+
+        function drawCloud(x, y) {
+            ctx.beginPath();
+            ctx.arc(x, y, 30, 0, Math.PI * 2);
+            ctx.arc(x + 25, y, 35, 0, Math.PI * 2);
+            ctx.arc(x + 50, y, 30, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawCity() {
+            const footerHeight = 80;
+            const groundY = height - footerHeight - 80 - (cameraY * 0.5);
+            if (groundY < -500) return; // Don't draw if too far
+            
+            const parallaxOffset = cameraY * 0.15;
+            
+            // NYC Skyline buildings (from left to right) - smaller heights for visibility
+            const buildings = [
+                // Left side buildings
+                { x: 50, w: 50, h: 140, color: '#4A5C6A', windows: true },
+                { x: 110, w: 40, h: 170, color: '#3D4F5C', windows: true },
+                { x: 160, w: 55, h: 120, color: '#5A6C7A', windows: true },
+                
+                // Empire State Building (distinctive with spire)
+                { x: 230, w: 45, h: 250, color: '#4E6072', windows: true, spire: true },
+                
+                { x: 285, w: 60, h: 150, color: '#3A4D5C', windows: true },
+                { x: 355, w: 35, h: 180, color: '#526478', windows: true },
+                
+                // Chrysler Building area
+                { x: 400, w: 40, h: 220, color: '#495B6A', windows: true, topTier: true },
+                
+                { x: 450, w: 70, h: 140, color: '#3F5261', windows: true },
+                
+                // One World Trade Center (tallest, centered)
+                { x: width/2 - 30, w: 60, h: 300, color: '#4A5E70', windows: true, wtc: true },
+                
+                { x: width/2 + 40, w: 55, h: 160, color: '#435566', windows: true },
+                { x: width/2 + 105, w: 50, h: 190, color: '#4D6074', windows: true },
+                { x: width/2 + 165, w: 45, h: 130, color: '#3E5060', windows: true },
+                
+                // Right side
+                { x: width - 250, w: 60, h: 170, color: '#4B5D6D', windows: true },
+                { x: width - 180, w: 40, h: 150, color: '#526377', windows: true },
+                { x: width - 130, w: 50, h: 130, color: '#3C4E5E', windows: true },
+                { x: width - 70, w: 45, h: 140, color: '#485A6A', windows: true },
+            ];
+            
+            buildings.forEach(building => {
+                if (groundY > -building.h - 50) {
+                    const buildingY = groundY - building.h;
+                    
+                    // Main building body
+                    ctx.fillStyle = building.color;
+                    ctx.fillRect(building.x, buildingY, building.w, building.h);
+                    
+                    // One World Trade Center special design (tapered)
+                    if (building.wtc) {
+                        ctx.fillStyle = building.color;
+                        ctx.beginPath();
+                        ctx.moveTo(building.x + building.w * 0.2, buildingY + building.h);
+                        ctx.lineTo(building.x + building.w * 0.5, buildingY - 50);
+                        ctx.lineTo(building.x + building.w * 0.8, buildingY + building.h);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Spire
+                        ctx.strokeStyle = '#6A7C8E';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(building.x + building.w / 2, buildingY - 50);
+                        ctx.lineTo(building.x + building.w / 2, buildingY - 100);
+                        ctx.stroke();
+                    }
+                    
+                    // Empire State Building spire
+                    if (building.spire) {
+                        const spireX = building.x + building.w / 2;
+                        const spireBase = buildingY;
+                        
+                        // Top section (stepped)
+                        ctx.fillStyle = '#5A6C7E';
+                        ctx.fillRect(building.x + building.w * 0.25, spireBase, building.w * 0.5, 30);
+                        ctx.fillRect(building.x + building.w * 0.35, spireBase - 30, building.w * 0.3, 30);
+                        
+                        // Spire
+                        ctx.fillStyle = '#707C8E';
+                        ctx.beginPath();
+                        ctx.moveTo(building.x + building.w * 0.4, spireBase - 30);
+                        ctx.lineTo(spireX, spireBase - 70);
+                        ctx.lineTo(building.x + building.w * 0.6, spireBase - 30);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    
+                    // Chrysler Building art deco top
+                    if (building.topTier) {
+                        const tiers = 5;
+                        for (let i = 0; i < tiers; i++) {
+                            const tierW = building.w * (1 - i * 0.15);
+                            const tierH = 8;
+                            ctx.fillStyle = `rgba(90, 100, 115, ${1 - i * 0.15})`;
+                            ctx.fillRect(
+                                building.x + (building.w - tierW) / 2,
+                                buildingY - i * tierH,
+                                tierW,
+                                tierH
+                            );
+                        }
+                    }
+                    
+                    // Windows
+                    if (building.windows) {
+                        ctx.fillStyle = 'rgba(255, 230, 150, 0.7)';
+                        const windowW = 3;
+                        const windowH = 4;
+                        const spacing = 8;
+                        
+                        for (let y = buildingY + 10; y < buildingY + building.h - 10; y += spacing) {
+                            for (let x = building.x + 5; x < building.x + building.w - 5; x += spacing) {
+                                // Random window lights
+                                if (Math.random() > 0.3) {
+                                    ctx.fillRect(x, y, windowW, windowH);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Building outline
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(building.x, buildingY, building.w, building.h);
+                }
+            });
+            
+            // Ground/street at city level
+            if (groundY > 0 && groundY < height) {
+                ctx.fillStyle = 'rgba(60, 60, 70, 0.3)';
+                ctx.fillRect(0, groundY, width, 3);
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Input handlers
+        canvas.addEventListener('click', () => {
+            if (gameState === 'playing') {
+                placeBlock();
+            }
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                placeBlock();
+            }
+        });
+
+        // Start game loop
+        gameLoop();
+    </script>
+</body>
+</html>
+
